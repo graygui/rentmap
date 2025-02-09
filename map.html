@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>房屋出租状态地图</title>
+
+    <!-- Leaflet.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <!-- Firebase SDKs (v9+ 模块化 SDK) -->
+    <script type="module">
+        // 导入 Firebase SDK 所需的函数
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+        // Firebase 配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmQBf0WC9FXIfmKS4tHz0185kQ2l245o4",
+            authDomain: "rentmap-1c653.firebaseapp.com",
+            databaseURL: "https://rentmap-1c653-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "rentmap-1c653",
+            storageBucket: "rentmap-1c653.firebasestorage.app",
+            messagingSenderId: "516803919784",
+            appId: "1:516803919784:web:fbc19392be9198c2f7e79d"
+        };
+
+        // 初始化 Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // 初始化 Leaflet 地图
+        function initMap() {
+            var map = L.map('map').setView([31.2304, 121.4737], 12); // 设置地图中心为上海
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            // 从 Firebase 读取数据并在地图上添加标记
+            const housesRef = ref(database, 'houses'); // Firebase 数据库路径
+
+            onValue(housesRef, (snapshot) => {
+                const data = snapshot.val(); // 获取数据库中所有的房屋数据
+                console.log(data);  // 输出数据，检查数据是否正确加载
+
+                if (!data) {
+                    console.log("没有从 Firebase 加载到数据");
+                }
+
+                for (const houseId in data) {
+                    const house = data[houseId];
+                    const { lat, lng, id, status } = house;
+                    if (lat && lng) {
+                        L.marker([lat, lng]).addTo(map)
+                            .bindPopup(`房屋 ${id}：${status}`); // 添加标记并显示弹出框
+                    }
+                }
+            });
+        }
+
+        // 等待页面加载完成后初始化地图
+        window.onload = initMap;
+    </script>
+
+    <!-- Leaflet.js JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <!-- Firebase SDK (非模块化方式) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
+    <style>
+        #map { height: 600px; }
+    </style>
+</head>
+<body>
+    <h2>房屋出租状态地图</h2>
+    <div id="map"></div>
+</body>
+</html>
